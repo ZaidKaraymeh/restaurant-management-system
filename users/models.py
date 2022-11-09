@@ -37,7 +37,8 @@ class UserManager(BaseUserManager):
 class CustomUser(AbstractUser):
     id = models.UUIDField(
         primary_key=True, default=uuid.uuid4, editable=False, unique=True)
-        
+
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []  # removes email from REQUIRED_FIELDS
 
@@ -45,7 +46,7 @@ class CustomUser(AbstractUser):
 
     objects = UserManager()
 
-
+    restaurant = models.ForeignKey("core.Restaurant", on_delete=models.CASCADE, null=True)
     phone_number = models.CharField(max_length=20, unique=True, null=True)
 
     created_at = models.DateTimeField(auto_now_add=True, auto_now=False)

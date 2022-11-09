@@ -24,6 +24,7 @@ class Food(models.Model):
     restaurant = models.ForeignKey("core.Restaurant", on_delete=models.CASCADE)
     food_type = models.ForeignKey("core.FoodType", on_delete=models.CASCADE)
 
+    image = models.ImageField(upload_to='images', null=True)
     name = models.CharField(max_length=255)
     price = models.DecimalField(max_digits=5, decimal_places=3)
     caption = models.CharField(max_length=255)
@@ -35,6 +36,20 @@ class Food(models.Model):
     def __str__(self):
         return self.name
 
+class FoodCart(models.Model):
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    
+    restaurant = models.ForeignKey("core.Restaurant", on_delete=models.CASCADE)
+    food = models.ForeignKey("core.Food", on_delete=models.CASCADE)
+
+    description = models.TextField(max_length=500)
+
+    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
+
+    def __str__(self):
+        return self.food.name
 
 class FoodType(models.Model):
     id = models.UUIDField(
@@ -56,7 +71,31 @@ class Order(models.Model):
         primary_key=True, default=uuid.uuid4, editable=False, unique=True)
     
     restaurant = models.ForeignKey("core.Restaurant", on_delete=models.CASCADE)
-    cart = models.ManyToManyField("core.Food")
+    cart = models.ManyToManyField("core.FoodCart")
+    price = models.DecimalField(max_digits=5, decimal_places=3, default = Decimal(0))
+
+    created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True, auto_now_add=False)
+
+    @property
+    def final_price(self) -> Decimal:
+        final : Decimal = Decimal(0)
+
+        for food_cart in self.cart.all():
+            final += food_cart.food.price
+        
+        return final
+
+    def __str__(self):
+        return self.created_at
+
+
+class Cart(models.Model):
+    id = models.UUIDField(
+        primary_key=True, default=uuid.uuid4, editable=False, unique=True)
+    
+    restaurant = models.ForeignKey("core.Restaurant", on_delete=models.CASCADE)
+    cart = models.ManyToManyField("core.FoodCart")
     price = models.DecimalField(max_digits=5, decimal_places=3)
 
     created_at = models.DateTimeField(auto_now=False, auto_now_add=True)
@@ -66,8 +105,8 @@ class Order(models.Model):
     def final_price(self) -> Decimal:
         final : Decimal = Decimal(0)
 
-        for food in self.cart.all():
-            final += food.price
+        for food_cart in self.cart.all():
+            final += food_cart.food.price
         
         return final
 
